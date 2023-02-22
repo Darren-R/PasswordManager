@@ -1,4 +1,6 @@
 from cryptography.fernet import Fernet
+import string
+import random
 
 class PasswordManager:
 
@@ -23,7 +25,7 @@ class PasswordManager:
             for key, value in initial_values.items():
                 self.add_password(key, value)
 
-    def load_password(self, path):
+    def load_password_file(self, path):
         self.password_file = path
 
         with open(path, 'r') as f:
@@ -42,6 +44,13 @@ class PasswordManager:
     def get_password(self, site):
         return self.password_dict[site]
 
+    def random_pass(self):
+        while True:
+            password = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(20))
+            if (any(c.islower() for c in password) and any(c.isupper() for c in password) and 
+                sum(c.isdigit() for c in password) >= 2 and sum(c in string.punctuation for c in password) >= 2):
+                return password
+
 def main():
     password = {
         "email" : "1234567",
@@ -51,15 +60,8 @@ def main():
     }
 
     pm = PasswordManager()
-    print("""What do you want to do?
-    (1) Create a new key
-    (2) Load an existing key
-    (3) Create new password file
-    (4) Load existing password file
-    (5) Add a new password
-    (6) Get a password
-    (q) Quit
-    """)
+
+    menu()    
 
     done = False
 
@@ -80,16 +82,39 @@ def main():
             pm.load_password_file(path)
         elif choice == "5":
             site = input("Enter the site: ")
-            password = input("Enter the password: ")
+            print("Do you want a randomly generated password? (y/n)")
+            random = input("Enter your choice: ")
+            if random == "y":
+                password = pm.random_pass()
+                print("new password is: " + password)
+            else:
+                password = input("Enter the password: ")
             pm.add_password(site, password)
         elif choice == "6":
+            continue
+        elif choice == "7":
             site = input("What site do you want: ")
-            print(f"Password for {site} is {pm.get_password(site)}")
-        elif choice == "q":
+            print(f"Password for {site} is: {pm.get_password(site)}")
+        elif choice == "8":
+            menu()
+        elif choice.lower() == "q" or "quit":
             done = True
             print("Bye")
         else:
             print("Invalid choice")
+
+def menu ():
+    print("""What do you want to do? \n
+    (1) Create a new key
+    (2) Load an existing key
+    (3) Create new password file
+    (4) Load existing password file
+    (5) Add a new password
+    (6) Update a password
+    (7) Get a password
+    (8) See menu again
+    (q) Quit
+    """)
 
 if __name__ == "__main__":
     main()
