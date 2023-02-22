@@ -45,8 +45,11 @@ class PasswordManager:
         return self.password_dict[site]
 
     def show_all_passwords(self):
-        for site in self.password_dict:
-            print(f"Passwords held for: {site}")
+        if self.password_dict.__len__() >= 0:
+            for site in self.password_dict:
+                print(f"Passwords held for: {site}")
+        else:
+            print("No passwords saved.")
 
     def random_pass(self):
         while True:
@@ -57,9 +60,9 @@ class PasswordManager:
 
 def main():
     password = {
-        "email" : "1234567",
+       "email" : "1234567",
         "Facebook" : "myfbpassword",
-        "youtube" : "hello123",
+       "youtube" : "hello123",
         "something" : "testpassword_1234"
     }
 
@@ -80,7 +83,7 @@ def main():
             pm.load_key(path)
         elif choice == "3":
             path = input("Enter path: ")
-            pm.create_password_file(path, password)
+            pm.create_password_file(path)
         elif choice == "4":
             path = input("Enter path: ")
             pm.load_password_file(path)
