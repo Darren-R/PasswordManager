@@ -44,6 +44,10 @@ class PasswordManager:
     def get_password(self, site):
         return self.password_dict[site]
 
+    def show_all_passwords(self):
+        for site in self.password_dict:
+            print(f"Passwords held for: {site}")
+
     def random_pass(self):
         while True:
             password = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(20))
@@ -91,7 +95,7 @@ def main():
                 password = input("Enter the password: ")
             pm.add_password(site, password)
         elif choice == "6":
-            continue
+            pm.show_all_passwords()
         elif choice == "7":
             site = input("What site do you want: ")
             print(f"Password for {site} is: {pm.get_password(site)}")
@@ -110,7 +114,7 @@ def menu ():
     (3) Create new password file
     (4) Load existing password file
     (5) Add a new password
-    (6) Update a password
+    (6) Passwords saved
     (7) Get a password
     (8) See menu again
     (q) Quit
