@@ -15,39 +15,61 @@ class PasswordManager:
             f.write(self.key)
 
     def load_key(self, path):
-        with open(path, 'rb') as f:
-            self.key = f.read()
+        try:
+            with open(path, 'rb') as f:
+                self.key = f.read()
+        except FileNotFoundError:
+            print(f"File {path} not located.")
 
     def create_password_file(self, path, initial_values=None):
         self.password_file = path
 
         if initial_values is not None:
-            for key, value in initial_values.items():
-                self.add_password(key, value)
+                    for site, values in initial_values.items():
+                        for key, value in values.items():
+                            self.add_password(site, key, value)
 
     def load_password_file(self, path):
-        self.password_file = path
+            self.password_file = path
+            
+            try:
+                with open(path, 'r') as f:
+                    for line in f:
+                        site, encrypted = line.strip().split(":")
+                        username_encrypted, password_encrypted = encrypted.split("+")
+                        if site not in self.password_dict:
+                            self.password_dict[site] = {}
+                        username = Fernet(self.key).decrypt(username_encrypted.encode()).decode()
+                        password = Fernet(self.key).decrypt(password_encrypted.encode()).decode()
+                        self.password_dict[site][username] = password
+            except FileNotFoundError:
+                print(f"File {path} not located.")
 
-        with open(path, 'r') as f:
-            for line in f:
-                site, encrypted = line.split(":")
-                self.password_dict[site] = Fernet(self.key).decrypt(encrypted.encode().decode())
+    def add_password(self, site, username, password):
+            if site not in self.password_dict:
+                self.password_dict[site] = {}
+            encrypted_username = Fernet(self.key).encrypt(username.encode()).decode()
+            encrypted_password = Fernet(self.key).encrypt(password.encode()).decode()
+            encrypted = encrypted_username + "+" + encrypted_password
+            self.password_dict[site][encrypted_username] = password
 
-    def add_password(self, site, password):
-        self.password_dict[site] = password
-
-        if self.password_file is not None:
-            with open(self.password_file, 'a') as f:
-                encrypted = Fernet(self.key).encrypt(password.encode())
-                f.write(site + ":" + encrypted.decode() + "\n")
+            if self.password_file is not None:
+                with open(self.password_file, 'a') as f:
+                    f.write(site + ":" + encrypted + "\n")
 
     def get_password(self, site):
-        return self.password_dict[site]
+        try:
+            user, password = list(self.password_dict[site].items())[0]
+            return print(f"Username: {user}\nPassword: {password}")
+        except KeyError:
+            return None, None
 
-    def show_all_passwords(self):
-        if self.password_dict.__len__() >= 0:
-            for site in self.password_dict:
-                print(f"Passwords held for: {site}")
+
+    def show_all_apps(self):
+        print("")
+        if len(self.password_dict) > 0:
+            for site, passwords in self.password_dict.items():
+                print(f"Passwords held for application: {site}")
         else:
             print("No passwords saved.")
 
@@ -60,10 +82,8 @@ class PasswordManager:
 
 def main():
     password = {
-       "email" : "1234567",
-        "Facebook" : "myfbpassword",
-       "youtube" : "hello123",
-        "something" : "testpassword_1234"
+       "email":{"Darren@gmail.com":"12345"},
+        "Facebook":{"Darren R":"myfbpassword"},
     }
 
     pm = PasswordManager()
@@ -83,25 +103,27 @@ def main():
             pm.load_key(path)
         elif choice == "3":
             path = input("Enter path: ")
-            pm.create_password_file(path)
+            pm.create_password_file(path, password)
         elif choice == "4":
             path = input("Enter path: ")
             pm.load_password_file(path)
         elif choice == "5":
             site = input("Enter the site: ")
+            key = input ("Enter your username: ")
             print("Do you want a randomly generated password? (y/n)")
             random = input("Enter your choice: ")
             if random == "y":
                 password = pm.random_pass()
-                print("new password is: " + password)
             else:
                 password = input("Enter the password: ")
-            pm.add_password(site, password)
+            print("Username: " + key)
+            print("Password: " + password)
+            pm.add_password(site, key, password)
         elif choice == "6":
-            pm.show_all_passwords()
+            pm.show_all_apps()
         elif choice == "7":
             site = input("What site do you want: ")
-            print(f"Password for {site} is: {pm.get_password(site)}")
+            pm.get_password(site)
         elif choice == "8":
             menu()
         elif choice.lower() == "q" or "quit":
@@ -111,13 +133,13 @@ def main():
             print("Invalid choice")
 
 def menu ():
-    print("""What do you want to do? \n
+    print("""\nWhat do you want to do?
     (1) Create a new key
     (2) Load an existing key
     (3) Create new password file
     (4) Load existing password file
     (5) Add a new password
-    (6) Passwords saved
+    (6) Applications saved
     (7) Get a password
     (8) See menu again
     (q) Quit
